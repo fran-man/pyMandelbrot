@@ -16,7 +16,11 @@ from pixArray import *
 
 imgSource = pixArray(100,100)
 
-png.from_array(imgSource.Array, 'RGB').save('a.png')
+for i in range(0,100):
+    imgSource.setPixel(i, i, 2*i, 0, 0)
+    print str(i)
+
+png.from_array(imgSource.getRaw(), 'RGB').save('a.png')
 # def evaluatePixel(xCoord,yCoord):
 #     curr_zn_ = 0 # The variable that will be looped through the formula
 #     count = 0 # No. of iterations
