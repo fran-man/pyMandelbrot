@@ -4,6 +4,8 @@ Created on 24 Oct 2013
 @author: George
 '''
 
+from decimal import *
+
 class Complex:
     '''
     classdocs
@@ -21,4 +23,4 @@ class Complex:
         return finalResult
     
     def modulus(self):
-        return (self.Re**2 + self.Im**2)**0.5
+        return (self.Re**2 + self.Im**2)**Decimal(0.5)
