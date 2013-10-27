@@ -10,18 +10,18 @@ from decimal import *
 from pixArray import *
 
 # Setup Defaults
-getcontext().prec = 10
+#getcontext().prec = 10
 # Mandelbrot World Parameters
-xMin = -2
-xMax = 1
-yMin = -0.845
-yMax = 0.845
+xMin = -2.5
+xMax = 1.5
+yMin = -1.125
+yMax = 1.125
 xRange = abs(xMin) + abs(xMax)
 yRange = abs(yMin) + abs(yMax)
 
-imgWidth = 40
+imgWidth = 1200
 imgHeight = int(imgWidth*(yRange/xRange))
-scaleFactor = imgWidth/xRange 
+scaleFactor = float(imgWidth/xRange) 
 
 # Start with a 300x300 image
 
@@ -32,8 +32,8 @@ def pixToIm(pixel_X,pixel_Y):
     Convert a pixel's xy coordinate into
     a complex number with decimal coefficients
     '''
-    img_X = Decimal(pixel_X/scaleFactor + xMin) # Div by scaleFactor maps to range [0,xRange].
-    img_Y = Decimal(pixel_Y/scaleFactor + yMin)
+    img_X = float(pixel_X)/scaleFactor + xMin # Div by scaleFactor maps to range [0,xRange].
+    img_Y = float(pixel_Y)/scaleFactor + yMin
     return Complex(img_X,img_Y)
 
 def evaluate(complexNumber):
@@ -42,7 +42,8 @@ def evaluate(complexNumber):
     for i in range(0,200):
         z_nSquared = z_n.square()
         z_n = Complex(z_nSquared.Re + complexNumber.Re, z_nSquared.Im + complexNumber.Im)
-        if z_n.modulus() > Decimal(4):
+        mod = z_n.modulus()
+        if z_n.modulus() > 4:
             return False, count
         count += 1
     # Assume in mandelbrot
@@ -56,7 +57,7 @@ for i in range(0,imgWidth):
         result = evaluate(complexCoords)
         if result[0] == True:
             imgSource.setPixel(i, j, 0, 0, 0)
-            print "pixel" + str(i) + "," + str(j) + "In mandelbrot!"
+            #print "pixel" + str(i) + "," + str(j) + "In mandelbrot!"
         else:
             imgSource.setPixel(i, j, 255, 255, 255)
             #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
