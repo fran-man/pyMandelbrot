@@ -8,6 +8,7 @@ import png
 from complex import *
 from decimal import *
 from pixArray import *
+from multiprocessing import Process
 
 # Setup Defaults
 #getcontext().prec = 10
@@ -19,13 +20,14 @@ yMax = 1.125
 xRange = abs(xMin) + abs(xMax)
 yRange = abs(yMin) + abs(yMax)
 
-imgWidth = 1200
+imgWidth = 250
 imgHeight = int(imgWidth*(yRange/xRange))
 scaleFactor = float(imgWidth/xRange) 
 
 # Start with a 300x300 image
 
 imgSource = pixArray(imgWidth,imgHeight)
+imgSource2 = pixArray(imgWidth,imgHeight)
 
 def pixToIm(pixel_X,pixel_Y):
     '''
@@ -51,16 +53,22 @@ def evaluate(complexNumber):
             
 
 # Now run main algorithm
-for i in range(0,imgWidth):
-    for j in range(0,imgHeight):
-        complexCoords = pixToIm(i, j)
-        result = evaluate(complexCoords)
-        if result[0] == True:
-            imgSource.setPixel(i, j, 0, 0, 0)
-            #print "pixel" + str(i) + "," + str(j) + "In mandelbrot!"
-        else:
-            imgSource.setPixel(i, j, 255, 255, 255)
-            #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
+def mainAlgo(imgSrc):
+    for i in range(0,imgWidth):
+        for j in range(0,imgHeight):
+            complexCoords = pixToIm(i, j)
+            result = evaluate(complexCoords)
+            if result[0] == True:
+                imgSrc.setPixel(i, j, 0, 0, 0)
+                #print "pixel" + str(i) + "," + str(j) + "In mandelbrot!"
+            else:
+                imgSrc.setPixel(i, j, 255, 255, 255)
+                #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
+                
+if __name__ == "__main__":
+    p1 = Process(target=mainAlgo,args=())
+    p2 = Process(target=mainAlgo)
+    
 
 png.from_array(imgSource.getRaw(), 'RGB').save('test.png')
 # def evaluatePixel(xCoord,yCoord):
