@@ -16,7 +16,7 @@ class pixRow(object):
     def getRaw(self):
         return self.Array
     
-    def setPixel(self,xVal,yVal,red,green,blue):
+    def setPixel(self,xVal,red,green,blue):
         self.Array[3*xVal] = red
         self.Array[3*xVal + 1] = green
         self.Array[3*xVal + 2] = blue

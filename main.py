@@ -6,9 +6,10 @@ Created on 22 Oct 2013
 
 import png
 from complex import *
-from decimal import *
 from pixArray import *
+from pixRow import *
 from multiprocessing import Process, Queue
+import pickle
 
 # Setup Defaults
 #getcontext().prec = 10
@@ -20,7 +21,7 @@ yMax = 1.125
 xRange = abs(xMin) + abs(xMax)
 yRange = abs(yMin) + abs(yMax)
 
-imgWidth = 45
+imgWidth = 400
 imgHeight = int(imgWidth*(yRange/xRange))
 scaleFactor = float(imgWidth/xRange) 
 
@@ -53,27 +54,32 @@ def evaluate(complexNumber):
             
 
 # Now run main algorithm
-def mainAlgo(imgSrc,resultQueue):
-    for i in range(0,imgWidth):
-        for j in range(0,imgHeight):
-            complexCoords = pixToIm(i, j)
+def processRow(rowWidth,jobQueue):
+    while True:
+        currRow = jobQueue.get()
+        if(currRow == "DONE"):
+            break
+        rowArray = pixRow(rowWidth)
+        for i in range(0,rowWidth):
+            complexCoords = pixToIm(i, currRow)
             result = evaluate(complexCoords)
             if result[0] == True:
-                imgSrc.setPixel(i, j, 0, 0, 0)
+                rowArray.setPixel(i, 0, 0, 0)
                 #print "pixel" + str(i) + "," + str(j) + "In mandelbrot!"
             else:
-                imgSrc.setPixel(i, j, 255, 255, 255)
+                rowArray.setPixel(i, 255, 255, 255)
                 #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
-    print "adding to queue!"
-    result = imgSrc.getRaw()
-    resultQueue.put(result)
+        tmpfile = open("out__ROW"+str(currRow)+".tmp",'wb')
+        pickle.dump(rowArray.getRaw(),tmpfile) 
                 
 if __name__ == "__main__":
     rowQ = Queue()
+    finalArray = []
     for i in range(0,imgHeight):
-        rowQ.add(i)
-    rowQ.add("DONE")
-    p1 = Process(target=mainAlgo,args=(imgSource,q,))
+        rowQ.put(i)
+    for i in range(0,8):
+        rowQ.put("DONE")
+    p1 = Process(target=processRow,args=(imgWidth,rowQ,))
     #p2 = Process(target=mainAlgo,args=(imgSource2,q,))
     #q.put(imgSource)
     p1.daemon = True
@@ -82,7 +88,6 @@ if __name__ == "__main__":
     #p2.start()
     p1.join()
     #p2.join()
-    res = q.get()
     print "DONE!"
     
 
