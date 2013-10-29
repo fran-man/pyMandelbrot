@@ -8,7 +8,7 @@ import png
 from complex import *
 from decimal import *
 from pixArray import *
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 # Setup Defaults
 #getcontext().prec = 10
@@ -20,7 +20,7 @@ yMax = 1.125
 xRange = abs(xMin) + abs(xMax)
 yRange = abs(yMin) + abs(yMax)
 
-imgWidth = 250
+imgWidth = 45
 imgHeight = int(imgWidth*(yRange/xRange))
 scaleFactor = float(imgWidth/xRange) 
 
@@ -53,7 +53,7 @@ def evaluate(complexNumber):
             
 
 # Now run main algorithm
-def mainAlgo(imgSrc):
+def mainAlgo(imgSrc,resultQueue):
     for i in range(0,imgWidth):
         for j in range(0,imgHeight):
             complexCoords = pixToIm(i, j)
@@ -64,13 +64,29 @@ def mainAlgo(imgSrc):
             else:
                 imgSrc.setPixel(i, j, 255, 255, 255)
                 #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
+    print "adding to queue!"
+    result = imgSrc.getRaw()
+    resultQueue.put(result)
                 
 if __name__ == "__main__":
-    p1 = Process(target=mainAlgo,args=())
-    p2 = Process(target=mainAlgo)
+    rowQ = Queue()
+    for i in range(0,imgHeight):
+        rowQ.add(i)
+    rowQ.add("DONE")
+    p1 = Process(target=mainAlgo,args=(imgSource,q,))
+    #p2 = Process(target=mainAlgo,args=(imgSource2,q,))
+    #q.put(imgSource)
+    p1.daemon = True
+    #p2.daemon = True
+    p1.start()
+    #p2.start()
+    p1.join()
+    #p2.join()
+    res = q.get()
+    print "DONE!"
     
 
-png.from_array(imgSource.getRaw(), 'RGB').save('test.png')
+#png.from_array(imgSource.getRaw(), 'RGB').save('test.png')
 # def evaluatePixel(xCoord,yCoord):
 #     curr_zn_ = 0 # The variable that will be looped through the formula
 #     count = 0 # No. of iterations
