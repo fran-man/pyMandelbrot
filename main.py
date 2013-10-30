@@ -21,7 +21,7 @@ yMax = 1.125
 xRange = abs(xMin) + abs(xMax)
 yRange = abs(yMin) + abs(yMax)
 
-imgWidth = 400
+imgWidth = 500
 imgHeight = int(imgWidth*(yRange/xRange))
 scaleFactor = float(imgWidth/xRange) 
 
@@ -80,14 +80,13 @@ if __name__ == "__main__":
     for i in range(0,8):
         rowQ.put("DONE")
     p1 = Process(target=processRow,args=(imgWidth,rowQ,))
-    #p2 = Process(target=mainAlgo,args=(imgSource2,q,))
-    #q.put(imgSource)
+    p2 = Process(target=processRow,args=(imgWidth,rowQ,))
     p1.daemon = True
-    #p2.daemon = True
+    p2.daemon = True
     p1.start()
-    #p2.start()
+    p2.start()
     p1.join()
-    #p2.join()
+    p2.join()
     print "DONE!"
     
 
