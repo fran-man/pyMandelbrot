@@ -54,33 +54,51 @@ def evaluate(complexNumber):
             
 
 # Now run main algorithm
-def processRow(rowWidth,jobQueue):
+def processChunk(rowWidth,jobQueue,chunkHeight):
     while True:
-        currRow = jobQueue.get()
-        if(currRow == "DONE"):
+        currChnk = jobQueue.get()
+        currChnkPos = currChnk*chunkHeight
+        
+        if(currChnk == "DONE"):
             break
-        rowArray = pixRow(rowWidth)
+        
+        '''If we are on the last chunk then do something slightly different'''
+        if currChnkPos + chunkHeight - 1 > imgHeight:
+            chunkHeight = imgHeight - currChnkPos
+            
+        rowArray = pixArray(rowWidth,chunkHeight)
         for i in range(0,rowWidth):
-            complexCoords = pixToIm(i, currRow)
-            result = evaluate(complexCoords)
-            if result[0] == True:
-                rowArray.setPixel(i, 0, 0, 0)
-                #print "pixel" + str(i) + "," + str(j) + "In mandelbrot!"
-            else:
-                rowArray.setPixel(i, 255, 255, 255)
-                #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
-        tmpfile = open("out__ROW"+str(currRow)+".tmp",'wb')
-        pickle.dump(rowArray.getRaw(),tmpfile) 
+            for j in range(currChnkPos,currChnkPos + chunkHeight):
+                complexCoords = pixToIm(i, j)
+                result = evaluate(complexCoords)
+                if result[0] == True:
+                    rowArray.setPixel(i,j-currChnkPos, 0, 0, 0)
+                    #print "pixel" + str(i) + "," + str(j) + "In mandelbrot!"
+                else:
+                    rowArray.setPixel(i,j-currChnkPos, 255, 255, 255)
+                    #print "Setting pixel", i, j
+                    #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
+        tmpfile = open("out__CHUNK"+str(currChnk)+".tmp",'wb')
+        pickle.dump(rowArray.getRaw(),tmpfile)
                 
 if __name__ == "__main__":
+    print "Final image Size: "+str(imgWidth)+"x"+str(imgHeight)
+    
+    processes = []
+    
     rowQ = Queue()
-    finalArray = []
-    for i in range(0,imgHeight):
-        rowQ.put(i)
+    '''list of 16 chunks + 1 potentially'''
+    if(imgHeight % 16 == 0):
+        for i in range(0,imgHeight/16):
+            rowQ.put(i)
+    else:
+        '''account for the extra smaller chunk'''
+        for i in range(0,imgHeight/16 + 1):
+            rowQ.put(i)
     for i in range(0,8):
         rowQ.put("DONE")
-    p1 = Process(target=processRow,args=(imgWidth,rowQ,))
-    p2 = Process(target=processRow,args=(imgWidth,rowQ,))
+    p1 = Process(target=processChunk,args=(imgWidth,rowQ,16))
+    p2 = Process(target=processChunk,args=(imgWidth,rowQ,16))
     p1.daemon = True
     p2.daemon = True
     p1.start()
