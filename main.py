@@ -8,7 +8,7 @@ import png
 from complex import *
 from pixArray import *
 from pixRow import *
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, process
 import pickle
 
 # Setup Defaults
@@ -21,14 +21,14 @@ yMax = 1.125
 xRange = abs(xMin) + abs(xMax)
 yRange = abs(yMin) + abs(yMax)
 
-imgWidth = 500
+imgWidth = 350
 imgHeight = int(imgWidth*(yRange/xRange))
 scaleFactor = float(imgWidth/xRange) 
 
 # Start with a 300x300 image
 
-imgSource = pixArray(imgWidth,imgHeight)
-imgSource2 = pixArray(imgWidth,imgHeight)
+#imgSource = pixArray(imgWidth,imgHeight)
+#imgSource2 = pixArray(imgWidth,imgHeight)
 
 def pixToIm(pixel_X,pixel_Y):
     '''
@@ -80,32 +80,56 @@ def processChunk(rowWidth,jobQueue,chunkHeight):
                     #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
         tmpfile = open("out__CHUNK"+str(currChnk)+".tmp",'wb')
         pickle.dump(rowArray.getRaw(),tmpfile)
+        tmpfile.close() #if we don't do this we get weird errors!
+                        #when trying to read
+
+def retrieveChunks(chunkCount):
+    finalArray = []
+    for i in range(0,chunkCount):
+        tmpfile = open("out__CHUNK"+str(i)+".tmp","rb")
+        chunkArray = pickle.load(tmpfile)
+        tmpfile.close()
+        
+        for row in chunkArray:
+            finalArray.append(row)
+    return finalArray
                 
 if __name__ == "__main__":
     print "Final image Size: "+str(imgWidth)+"x"+str(imgHeight)
     
     processes = []
+    chunkCount = 0
     
     rowQ = Queue()
     '''list of 16 chunks + 1 potentially'''
     if(imgHeight % 16 == 0):
         for i in range(0,imgHeight/16):
             rowQ.put(i)
+        chunkCount = imgHeight/16
     else:
         '''account for the extra smaller chunk'''
         for i in range(0,imgHeight/16 + 1):
             rowQ.put(i)
+        chunkCount = imgHeight/16 + 1
     for i in range(0,8):
         rowQ.put("DONE")
-    p1 = Process(target=processChunk,args=(imgWidth,rowQ,16))
-    p2 = Process(target=processChunk,args=(imgWidth,rowQ,16))
-    p1.daemon = True
-    p2.daemon = True
-    p1.start()
-    p2.start()
-    p1.join()
-    p2.join()
-    print "DONE!"
+    
+    for i in range(0,8):
+        p = Process(target=processChunk,args=(imgWidth, rowQ, 16,))
+        p.daemon = True
+        processes.append(p)
+    
+    for p in processes:
+        p.start()
+    
+    for p in processes:
+        p.join()
+    '''
+    Now read back in!
+    '''
+    imgArrayFinal = retrieveChunks(chunkCount)
+    #Save
+    png.from_array(imgArrayFinal, 'RGB').save('test.png')
     
 
 #png.from_array(imgSource.getRaw(), 'RGB').save('test.png')
