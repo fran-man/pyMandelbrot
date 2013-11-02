@@ -7,7 +7,6 @@ Created on 22 Oct 2013
 import png
 from complex import *
 from pixArray import *
-from pixRow import *
 from multiprocessing import Process, Queue, process
 import pickle
 
@@ -21,7 +20,7 @@ yMax = 1.125
 xRange = abs(xMin) + abs(xMax)
 yRange = abs(yMin) + abs(yMax)
 
-imgWidth = 350
+imgWidth = 600
 imgHeight = int(imgWidth*(yRange/xRange))
 scaleFactor = float(imgWidth/xRange) 
 
@@ -72,12 +71,11 @@ def processChunk(rowWidth,jobQueue,chunkHeight):
                 complexCoords = pixToIm(i, j)
                 result = evaluate(complexCoords)
                 if result[0] == True:
+                    # This point is in the mandelbrot set
                     rowArray.setPixel(i,j-currChnkPos, 0, 0, 0)
-                    #print "pixel" + str(i) + "," + str(j) + "In mandelbrot!"
                 else:
-                    rowArray.setPixel(i,j-currChnkPos, 255, 255, 255)
-                    #print "Setting pixel", i, j
-                    #print "pixel" + str(i) + "," + str(j) + "NOT In mandelbrot!"
+                    pixelColour = 255/((result[1] % 3)+2)
+                    rowArray.setPixel(i,j-currChnkPos, pixelColour, pixelColour, 255)
         tmpfile = open("out__CHUNK"+str(currChnk)+".tmp",'wb')
         pickle.dump(rowArray.getRaw(),tmpfile)
         tmpfile.close() #if we don't do this we get weird errors!
